@@ -1,7 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-    const { token, ...rest } = options as any;
+interface ApiOptions extends RequestInit {
+    token?: string;
+}
+
+export async function apiFetch(endpoint: string, options: ApiOptions = {}) {
+    const { token, ...rest } = options;
 
     const headers = new Headers(options.headers || {});
     if (token) {

@@ -70,12 +70,14 @@ export const requestAccess = async (req: AuthRequest, res: Response) => {
 
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
     // Solo un ADMIN puede ver la lista de usuarios
+    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+
     try {
-        const admin = await prisma.user.findUnique({ where: { id: req.user?.id } });
+        const admin = await prisma.user.findUnique({ where: { id: req.user.id } });
         if (admin?.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can view users' });
 
         const users = await prisma.user.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: { name: 'asc' }
         });
         res.json(users);
     } catch (error) {
@@ -87,8 +89,11 @@ export const approveUser = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { status } = req.body; // 'ACTIVE' o 'PENDING'
 
+    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Invalid user ID' });
+    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+
     try {
-        const admin = await prisma.user.findUnique({ where: { id: req.user?.id } });
+        const admin = await prisma.user.findUnique({ where: { id: req.user.id } });
         if (admin?.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can update users' });
 
         const user = await prisma.user.update({
