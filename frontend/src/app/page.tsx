@@ -18,17 +18,27 @@ export default function HomePage() {
   const [token, setToken] = useState('');
 
   const fetchData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    setToken(session.access_token);
-
     try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        console.log('No active session found, redirecting to login');
+        router.push('/login');
+        return;
+      }
+
+      setToken(session.access_token);
+
+      console.log('Fetching user profile for:', session.user.id);
       const me = await usersApi.getMe(session.access_token);
+
+      if (!me) {
+        console.warn('User authenticated in Supabase but not found in app database');
+        // Tal vez redirigir a una página de error o intentar sincronizar de nuevo
+        router.push('/auth/callback'); // Re-intentar sincronización
+        return;
+      }
+
       setUser(me);
 
       if (me.status === 'ACTIVE') {
@@ -36,7 +46,11 @@ export default function HomePage() {
         setBooks(allBooks);
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading data in HomePage:', error);
+      // Si el error es un 404 de nuestra API, significa que no está sincronizado
+      if (error instanceof Error && error.message.includes('404')) {
+        router.push('/auth/callback');
+      }
     } finally {
       setLoading(false);
     }
