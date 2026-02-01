@@ -27,7 +27,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
         req.user = {
             id: user.id,
-            email: user.email ?? undefined,
+            ...(user.email ? { email: user.email } : {}),
         };
 
         next();

@@ -19,6 +19,8 @@ export const getBooks = async (req: AuthRequest, res: Response) => {
 
 export const getBookById = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Invalid book ID' });
+
     try {
         const book = await prisma.book.findUnique({
             where: { id },
@@ -60,6 +62,8 @@ export const transferBook = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { newHolderId } = req.body;
 
+    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Invalid book ID' });
+
     try {
         const book = await prisma.book.findUnique({ where: { id } });
         if (!book) return res.status(404).json({ error: 'Book not found' });
@@ -81,6 +85,8 @@ export const transferBook = async (req: AuthRequest, res: Response) => {
 
 export const deleteBook = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+
+    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Invalid book ID' });
 
     try {
         const book = await prisma.book.findUnique({ where: { id } });
