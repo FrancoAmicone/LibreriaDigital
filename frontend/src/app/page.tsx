@@ -109,7 +109,9 @@ export default function HomePage() {
               <Settings className="w-5 h-5" />
             </button>
           )}
-          <img src={user?.image} className="w-8 h-8 rounded-full border-2 border-primary" alt="Profile" />
+          <button onClick={() => router.push('/profile')} className="transition-transform hover:scale-105 active:scale-95">
+            <img src={user?.image} className="w-8 h-8 rounded-full border-2 border-primary" alt="Profile" />
+          </button>
         </div>
       </header>
 
