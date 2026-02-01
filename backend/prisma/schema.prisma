@@ -6,28 +6,46 @@ datasource db {
   provider  = "postgresql"
 }
 model User {
-  id         String  @id @default(cuid())
-  name       String?
-  email      String  @unique
-  image      String?
-  role       Role    @default(USER)
-  status     Status  @default(PENDING)
-  heldBooks  Book[]  @relation("HolderRelation")
-  ownedBooks Book[]  @relation("OwnerRelation")
+  id              String           @id @default(cuid())
+  name            String?
+  email           String           @unique
+  image           String?
+  role            Role             @default(USER)
+  status          Status           @default(PENDING)
+  heldBooks       Book[]           @relation("HolderRelation")
+  ownedBooks      Book[]           @relation("OwnerRelation")
+  lendingRequests LendingRequest[]
 }
 
 model Book {
-  id              String   @id @default(cuid())
+  id              String           @id @default(cuid())
   title           String
   author          String
   isbn            String?
   thumbnail       String?
-  isAvailable     Boolean  @default(true)
-  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  isAvailable     Boolean          @default(true)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
   ownerId         String
   currentHolderId String
-  currentHolder   User     @relation("HolderRelation", fields: [currentHolderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  owner           User     @relation("OwnerRelation", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currentHolder   User             @relation("HolderRelation", fields: [currentHolderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  owner           User             @relation("OwnerRelation", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  lendingRequests LendingRequest[]
+}
+
+model LendingRequest {
+  id          String        @id @default(cuid())
+  bookId      String
+  requesterId String
+  status      LendingStatus @default(PENDING)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(6)
+  
+  book        Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  requester   User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  
+  @@index([bookId])
+  @@index([requesterId])
+  @@index([status])
 }
 
 enum Role {
@@ -38,4 +56,13 @@ enum Role {
 enum Status {
   PENDING
   ACTIVE
+}
+
+enum LendingStatus {
+  PENDING
+  APPROVED
+  DELIVERED
+  REJECTED
+  RETURNED
+  CANCELLED
 }
