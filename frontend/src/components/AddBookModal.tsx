@@ -165,9 +165,10 @@ export default function AddBookModal({ isOpen, onClose, onSuccess, token }: AddB
             setResults([]);
             setPreview(null);
             setQuery('');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error adding book:', error);
-            alert('Error al añadir el libro. Aseguráte de que el bucket "books" existe en Supabase.');
+            // Show specific error to help usage
+            alert(`Error: ${error.message || 'Error desconocido'}`);
         } finally {
             setSubmitting(false);
         }

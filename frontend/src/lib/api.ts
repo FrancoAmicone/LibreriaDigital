@@ -46,4 +46,6 @@ export const booksApi = {
         apiFetch(`/api/books/${id}/transfer`, { method: 'PATCH', body: JSON.stringify({ newHolderId }), token }),
     delete: (id: string, token: string) =>
         apiFetch(`/api/books/${id}`, { method: 'DELETE', token }),
+    update: (id: string, data: any, token: string) =>
+        apiFetch(`/api/books/${id}`, { method: 'PUT', body: JSON.stringify(data), token }),
 };
