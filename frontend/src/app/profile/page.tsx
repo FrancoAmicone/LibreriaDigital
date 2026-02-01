@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase';
 import { usersApi, booksApi } from '@/lib/api';
 import { Loader2, Edit, Trash2, Book as BookIcon } from 'lucide-react';
 import EditBookModal from '@/components/EditBookModal';
@@ -14,14 +15,23 @@ export default function ProfilePage() {
     const [token, setToken] = useState<string | null>(null);
 
     // Initial Fetch
+    const supabase = createClient();
+    // ...
+
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        if (!storedToken) {
-            router.push('/login');
-            return;
-        }
-        setToken(storedToken);
-        fetchUser(storedToken);
+        const checkSession = async () => {
+            const { data: { session }, error } = await supabase.auth.getSession();
+
+            if (error || !session) {
+                router.push('/login');
+                return;
+            }
+
+            setToken(session.access_token);
+            fetchUser(session.access_token);
+        };
+
+        checkSession();
     }, []);
 
     const fetchUser = async (authToken: string) => {
@@ -30,7 +40,7 @@ export default function ProfilePage() {
             setUser(userData);
         } catch (error) {
             console.error('Error fetching user:', error);
-            // If unauthorized, maybe redirect to login
+            router.push('/login');
         } finally {
             setLoading(false);
         }
