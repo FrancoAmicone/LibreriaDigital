@@ -132,6 +132,21 @@ export const approveRequest = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Only pending requests can be approved' });
         }
 
+        // Check if there's already an approved or delivered request for this book
+        const existingActiveRequest = await prisma.lendingRequest.findFirst({
+            where: {
+                bookId: lendingRequest.bookId,
+                id: { not: id }, // Exclude current request
+                status: { in: ['APPROVED', 'DELIVERED'] },
+            },
+        });
+
+        if (existingActiveRequest) {
+            return res.status(400).json({
+                error: 'This book already has an approved or delivered request. Please wait until it is returned.'
+            });
+        }
+
         const updatedRequest = await prisma.lendingRequest.update({
             where: { id },
             data: { status: 'APPROVED' },
@@ -222,6 +237,21 @@ export const markAsDelivered = async (req: AuthRequest, res: Response) => {
 
         if (lendingRequest.status !== 'APPROVED') {
             return res.status(400).json({ error: 'Only approved requests can be marked as delivered' });
+        }
+
+        // Check if there's already a delivered request for this book
+        const existingDeliveredRequest = await prisma.lendingRequest.findFirst({
+            where: {
+                bookId: lendingRequest.bookId,
+                id: { not: id }, // Exclude current request
+                status: 'DELIVERED',
+            },
+        });
+
+        if (existingDeliveredRequest) {
+            return res.status(400).json({
+                error: 'This book is already delivered to someone else. Please wait until it is returned.'
+            });
         }
 
         // Update request status and book holder
