@@ -103,3 +103,40 @@ export const deleteBook = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Error deleting book', details: error });
     }
 };
+
+export const updateBook = async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { title, author, isbn, thumbnail, isAvailable } = req.body;
+
+    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Invalid book ID' });
+
+    try {
+        const book = await prisma.book.findUnique({ where: { id } });
+        if (!book) return res.status(404).json({ error: 'Book not found' });
+
+        // Only owner can update
+        if (book.ownerId !== req.user?.id) {
+            return res.status(403).json({ error: 'Only the owner can update this book' });
+        }
+
+        const updateData: any = {
+            title: title || undefined,
+            author: author || undefined,
+            isbn: isbn || undefined,
+            thumbnail: thumbnail || undefined,
+        };
+
+        if (typeof isAvailable === 'boolean') {
+            updateData.isAvailable = isAvailable;
+        }
+
+        const updatedBook = await prisma.book.update({
+            where: { id },
+            data: updateData,
+        });
+        res.json(updatedBook);
+    } catch (error) {
+        console.error('Error in updateBook:', error);
+        res.status(500).json({ error: 'Error updating book', details: String(error) });
+    }
+};

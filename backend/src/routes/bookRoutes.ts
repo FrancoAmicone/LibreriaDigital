@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getBooks, getBookById, addBook, transferBook, deleteBook } from '../controllers/bookController.js';
+import { getBooks, getBookById, addBook, transferBook, deleteBook, updateBook } from '../controllers/bookController.js';
 import { authenticate, isActive } from '../middleware/auth.js';
 
 const router = Router();
@@ -11,6 +11,7 @@ router.use(isActive);
 router.get('/', getBooks);
 router.get('/:id', getBookById);
 router.post('/', addBook);
+router.put('/:id', updateBook);
 router.patch('/:id/transfer', transferBook);
 router.delete('/:id', deleteBook);
 

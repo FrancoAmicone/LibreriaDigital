@@ -7,7 +7,7 @@ const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('⚠️ SUPABASE_URL or SUPABASE_ANON_KEY is missing in .env');
+    throw new Error('❌ Error: SUPABASE_URL or SUPABASE_ANON_KEY is missing. Check your Railway environment variables.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

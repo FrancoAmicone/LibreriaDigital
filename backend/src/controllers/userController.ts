@@ -25,9 +25,13 @@ export const getMe = async (req: AuthRequest, res: Response) => {
 };
 
 export const syncUser = async (req: AuthRequest, res: Response) => {
-    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!req.user) {
+        console.error('[syncUser] No user in request');
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
 
     const { name, image, email } = req.body;
+    console.log(`[syncUser] Syncing user: ${req.user.id}`, { name, email });
 
     try {
         const user = await prisma.user.upsert({
@@ -47,8 +51,10 @@ export const syncUser = async (req: AuthRequest, res: Response) => {
             },
         });
 
+        console.log(`[syncUser] Successfully synced user: ${user.id} with status: ${user.status}`);
         res.json(user);
     } catch (error) {
+        console.error('[syncUser] Error syncing user:', error);
         res.status(500).json({ error: 'Error syncing user', details: error });
     }
 };
@@ -89,20 +95,33 @@ export const approveUser = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { status } = req.body; // 'ACTIVE' o 'PENDING'
 
-    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Invalid user ID' });
-    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+    console.log(`[approveUser] Attempting to update user ${id} to status ${status}`);
+
+    if (!id || typeof id !== 'string') {
+        console.error('[approveUser] Invalid user ID provided');
+        return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    if (!req.user) {
+        console.error('[approveUser] Not authenticated');
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
 
     try {
         const admin = await prisma.user.findUnique({ where: { id: req.user.id } });
-        if (admin?.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can update users' });
+        if (admin?.role !== 'ADMIN') {
+            console.warn(`[approveUser] Unauthorized attempt by user ${req.user.id}`);
+            return res.status(403).json({ error: 'Only admins can update users' });
+        }
 
         const user = await prisma.user.update({
             where: { id },
             data: { status },
         });
 
+        console.log(`[approveUser] Successfully updated user ${id} to ${status}`);
         res.json({ message: `User status updated to ${status}`, user });
     } catch (error) {
+        console.error('[approveUser] Error updating user status:', error);
         res.status(500).json({ error: 'Error updating user status' });
     }
 };
