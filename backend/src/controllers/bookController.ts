@@ -58,30 +58,6 @@ export const addBook = async (req: AuthRequest, res: Response) => {
     }
 };
 
-export const transferBook = async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { newHolderId } = req.body;
-
-    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Invalid book ID' });
-
-    try {
-        const book = await prisma.book.findUnique({ where: { id } });
-        if (!book) return res.status(404).json({ error: 'Book not found' });
-
-        // Solo el poseedor actual puede transferir
-        if (book.currentHolderId !== req.user?.id) {
-            return res.status(403).json({ error: 'Only the current holder can transfer this book' });
-        }
-
-        const updatedBook = await prisma.book.update({
-            where: { id },
-            data: { currentHolderId: newHolderId },
-        });
-        res.json(updatedBook);
-    } catch (error) {
-        res.status(500).json({ error: 'Error transferring book', details: error });
-    }
-};
 
 export const deleteBook = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;

@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { usersApi, booksApi } from '@/lib/api';
+import { usersApi, booksApi, lendingApi } from '@/lib/api';
 import BookCard from '@/components/BookCard';
 import { Plus, Settings, LogOut, Clock } from 'lucide-react';
 import AddBookModal from '@/components/AddBookModal';
+import BookDetailsModal from '@/components/BookDetailsModal';
 
 export default function HomePage() {
   const router = useRouter();
@@ -15,7 +16,9 @@ export default function HomePage() {
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<any>(null); // State for details modal
   const [token, setToken] = useState('');
+  const [hasPendingRequests, setHasPendingRequests] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -43,7 +46,18 @@ export default function HomePage() {
 
       if (me.status === 'ACTIVE') {
         const allBooks = await booksApi.getAll(session.access_token);
-        setBooks(allBooks);
+
+        // Filter out my own books as requested: "no les muestres al usuario su propio libro"
+        // Show books where ownerId !== me.id
+        const filteredBooks = allBooks.filter((book: any) => book.ownerId !== me.id);
+
+
+        setBooks(filteredBooks);
+
+        // Check for pending requests for my books
+        const requests = await lendingApi.getRequestsForMyBooks(session.access_token);
+        const hasPending = requests.some((r: any) => r.status === 'PENDING');
+        setHasPendingRequests(hasPending);
       }
     } catch (error) {
       console.error('Error loading data in HomePage:', error);
@@ -109,8 +123,11 @@ export default function HomePage() {
               <Settings className="w-5 h-5" />
             </button>
           )}
-          <button onClick={() => router.push('/profile')} className="transition-transform hover:scale-105 active:scale-95">
+          <button onClick={() => router.push('/profile')} className="transition-transform hover:scale-105 active:scale-95 relative">
             <img src={user?.image} className="w-8 h-8 rounded-full border-2 border-primary" alt="Profile" />
+            {hasPendingRequests && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white dark:border-black rounded-full shadow-sm animate-pulse"></span>
+            )}
           </button>
         </div>
       </header>
@@ -119,13 +136,18 @@ export default function HomePage() {
       <main className="p-6">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {books.map((book) => (
-            <BookCard key={book.id} {...book} />
+            <BookCard
+              key={book.id}
+              {...book}
+              currentUser={user} // Pass user context if needed inside card, otherwise logic handles it
+              onClick={() => setSelectedBook(book)}
+            />
           ))}
         </div>
 
         {books.length === 0 && (
           <div className="text-center py-20 space-y-4">
-            <p className="text-gray-400">Aún no hay libros en la biblioteca.</p>
+            <p className="text-gray-400">Aún no hay libros disponibles de otros usuarios.</p>
           </div>
         )}
       </main>
@@ -139,12 +161,25 @@ export default function HomePage() {
         Añadir Libro
       </button>
 
-      {/* Modal */}
+      {/* Modals */}
       <AddBookModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchData}
         token={token}
+      />
+
+      <BookDetailsModal
+        isOpen={!!selectedBook}
+        book={selectedBook}
+        onClose={() => setSelectedBook(null)}
+        onSuccess={() => {
+          fetchData();
+          // Optional: Close modal on success? Or keep open to show updated status? 
+          // Modal internally calls onSuccess then onClose? Yes, in handleAction.
+        }}
+        token={token}
+        currentUser={user}
       />
     </div>
   );

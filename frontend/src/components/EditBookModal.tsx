@@ -21,6 +21,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, token, book 
         title: '',
         author: '',
         isbn: '',
+        isAvailable: true,
     });
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, token, book 
                 title: book.title || '',
                 author: book.author || '',
                 isbn: book.isbn || '',
+                isAvailable: book.isAvailable ?? true,
             });
             setImagePreview(book.thumbnail || null);
         }
@@ -91,6 +93,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, token, book 
                 author: form.author,
                 isbn: form.isbn,
                 thumbnail: imageUrl,
+                isAvailable: form.isAvailable,
             };
 
             await booksApi.update(book.id, updateData, token);
@@ -107,8 +110,14 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, token, book 
     if (!isOpen || !book) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white text-gray-900 w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full duration-500">
+        <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white text-gray-900 w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full duration-500"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-3xl font-black italic tracking-tighter">
                         Editar <span className="text-primary not-italic">Libro</span>
@@ -162,15 +171,29 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, token, book 
                         </div>
                     </div>
 
-                    <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-1 block">ISBN (Opcional)</label>
-                        <input
-                            type="text"
-                            value={form.isbn}
-                            onChange={(e) => setForm({ ...form, isbn: e.target.value })}
-                            className="w-full bg-gray-50 text-gray-900 h-12 rounded-xl px-4 font-bold border border-transparent focus:border-primary/20 outline-none transition-all"
-                            placeholder="Ej: 9781234567890"
-                        />
+                    <div className="flex gap-4">
+                        <div className="flex-1">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-1 block">ISBN (Opcional)</label>
+                            <input
+                                type="text"
+                                value={form.isbn}
+                                onChange={(e) => setForm({ ...form, isbn: e.target.value })}
+                                className="w-full bg-gray-50 text-gray-900 h-12 rounded-xl px-4 font-bold border border-transparent focus:border-primary/20 outline-none transition-all"
+                                placeholder="Ej: 9781234567890"
+                            />
+                        </div>
+                        <div className="w-32">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-1 block">Estado</label>
+                            <button
+                                onClick={() => setForm({ ...form, isAvailable: !form.isAvailable })}
+                                className={`w-full h-12 rounded-xl font-bold transition-all border-2 ${form.isAvailable
+                                    ? 'bg-green-100 text-green-700 border-green-200'
+                                    : 'bg-red-100 text-red-700 border-red-200'
+                                    }`}
+                            >
+                                {form.isAvailable ? 'Disponible' : 'Prestado'}
+                            </button>
+                        </div>
                     </div>
 
                     <input

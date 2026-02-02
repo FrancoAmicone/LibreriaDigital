@@ -42,10 +42,27 @@ export const booksApi = {
     getById: (id: string, token: string) => apiFetch(`/api/books/${id}`, { token }),
     create: (data: any, token: string) =>
         apiFetch('/api/books', { method: 'POST', body: JSON.stringify(data), token }),
-    transfer: (id: string, newHolderId: string, token: string) =>
-        apiFetch(`/api/books/${id}/transfer`, { method: 'PATCH', body: JSON.stringify({ newHolderId }), token }),
     delete: (id: string, token: string) =>
         apiFetch(`/api/books/${id}`, { method: 'DELETE', token }),
     update: (id: string, data: any, token: string) =>
         apiFetch(`/api/books/${id}`, { method: 'PUT', body: JSON.stringify(data), token }),
+};
+
+export const lendingApi = {
+    createRequest: (bookId: string, token: string) =>
+        apiFetch('/api/lending-requests', { method: 'POST', body: JSON.stringify({ bookId }), token }),
+    getMyRequests: (token: string) =>
+        apiFetch('/api/lending-requests/my-requests', { token }),
+    getRequestsForMyBooks: (token: string) =>
+        apiFetch('/api/lending-requests/for-my-books', { token }),
+    approve: (requestId: string, token: string) =>
+        apiFetch(`/api/lending-requests/${requestId}/approve`, { method: 'PATCH', token }),
+    reject: (requestId: string, token: string) =>
+        apiFetch(`/api/lending-requests/${requestId}/reject`, { method: 'PATCH', token }),
+    markDelivered: (requestId: string, token: string) =>
+        apiFetch(`/api/lending-requests/${requestId}/deliver`, { method: 'PATCH', token }),
+    markReturned: (requestId: string, token: string) =>
+        apiFetch(`/api/lending-requests/${requestId}/return`, { method: 'PATCH', token }),
+    cancel: (requestId: string, token: string) =>
+        apiFetch(`/api/lending-requests/${requestId}`, { method: 'DELETE', token }),
 };
