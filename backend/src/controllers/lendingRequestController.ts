@@ -1,7 +1,6 @@
 import type { Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import type { AuthRequest } from '../middleware/auth.js';
-import { sendBookRequestEmail, sendRequestApprovedEmail, sendRequestRejectedEmail } from '../lib/email.js';
 
 // Create a lending request
 export const createRequest = async (req: AuthRequest, res: Response) => {
@@ -14,13 +13,8 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
     }
 
     try {
-        const requester = await prisma.user.findUnique({ where: { id: req.user.id } });
-        if (!requester) return res.status(404).json({ error: 'Requester not found' });
         // Check if book exists and is available
-        const book = await prisma.book.findUnique({
-            where: { id: bookId },
-            include: { owner: true }
-        });
+        const book = await prisma.book.findUnique({ where: { id: bookId } });
         if (!book) return res.status(404).json({ error: 'Book not found' });
 
         // Can't request your own book
@@ -60,25 +54,6 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         });
 
         res.status(201).json(lendingRequest);
-
-        // Create notification for the book owner
-        await prisma.notification.create({
-            data: {
-                userId: book.ownerId,
-                message: `${requester.name || 'Alguien'} ha solicitado tu libro "${book.title}"`,
-                type: 'REQUEST',
-            },
-        });
-
-        // Envío de correo asíncrono
-        if (book.owner.email) {
-            sendBookRequestEmail(
-                book.owner.email,
-                book.owner.name || 'Usuario',
-                requester.name || 'Alguien',
-                book.title
-            ).catch(err => console.error('Email delay error:', err));
-        }
     } catch (error) {
         console.error('Error creating lending request:', error);
         res.status(500).json({ error: 'Error creating lending request', details: error });
@@ -141,10 +116,7 @@ export const approveRequest = async (req: AuthRequest, res: Response) => {
     try {
         const lendingRequest = await prisma.lendingRequest.findUnique({
             where: { id },
-            include: {
-                book: { include: { owner: true } },
-                requester: true
-            },
+            include: { book: true },
         });
 
         if (!lendingRequest) {
@@ -188,28 +160,7 @@ export const approveRequest = async (req: AuthRequest, res: Response) => {
             },
         });
 
-        const owner = await prisma.user.findUnique({ where: { id: req.user.id } });
-
         res.json(updatedRequest);
-
-        // Create notification for the requester
-        await prisma.notification.create({
-            data: {
-                userId: lendingRequest.requesterId,
-                message: `Tu solicitud para el libro "${lendingRequest.book.title}" ha sido aprobada`,
-                type: 'APPROVAL',
-            },
-        });
-
-        // Envío de correo asíncrono
-        if (lendingRequest.requester.email) {
-            sendRequestApprovedEmail(
-                lendingRequest.requester.email,
-                lendingRequest.requester.name || 'Usuario',
-                owner?.name || 'El dueño del libro',
-                lendingRequest.book.title
-            ).catch(err => console.error('Email delay error:', err));
-        }
     } catch (error) {
         res.status(500).json({ error: 'Error approving request', details: error });
     }
@@ -226,10 +177,7 @@ export const rejectRequest = async (req: AuthRequest, res: Response) => {
     try {
         const lendingRequest = await prisma.lendingRequest.findUnique({
             where: { id },
-            include: {
-                book: { include: { owner: true } },
-                requester: true
-            },
+            include: { book: true },
         });
 
         if (!lendingRequest) {
@@ -258,28 +206,7 @@ export const rejectRequest = async (req: AuthRequest, res: Response) => {
             },
         });
 
-        const owner = await prisma.user.findUnique({ where: { id: req.user.id } });
-
         res.json(updatedRequest);
-
-        // Create notification for the requester
-        await prisma.notification.create({
-            data: {
-                userId: lendingRequest.requesterId,
-                message: `Tu solicitud para el libro "${lendingRequest.book.title}" ha sido rechazada`,
-                type: 'REJECTION',
-            },
-        });
-
-        // Envío de correo asíncrono
-        if (lendingRequest.requester.email) {
-            sendRequestRejectedEmail(
-                lendingRequest.requester.email,
-                lendingRequest.requester.name || 'Usuario',
-                owner?.name || 'El dueño del libro',
-                lendingRequest.book.title
-            ).catch(err => console.error('Email delay error:', err));
-        }
     } catch (error) {
         res.status(500).json({ error: 'Error rejecting request', details: error });
     }
@@ -448,15 +375,6 @@ export const cancelRequest = async (req: AuthRequest, res: Response) => {
                     },
                 },
                 requester: { select: { name: true, image: true } },
-            },
-        });
-
-        // Create notification for the book owner
-        await prisma.notification.create({
-            data: {
-                userId: updatedRequest.book.ownerId,
-                message: `${updatedRequest.requester.name || 'Alguien'} ha cancelado su solicitud por "${updatedRequest.book.title}"`,
-                type: 'CANCELLATION',
             },
         });
 
