@@ -19,7 +19,7 @@ export const getNotifications = async (req: Request, res: Response) => {
 
 export const markAsRead = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params as { id: string };
         const userId = (req as any).user.id;
 
         const notification = await prisma.notification.findUnique({
