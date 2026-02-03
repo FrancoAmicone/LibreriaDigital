@@ -18,15 +18,24 @@ if (GMAIL_PASS) {
 }
 console.log('------------------------');
 
-// Configuración de Nodemailer con Logs detallados
+// Configuración de Nodemailer muy robusta para evitar timeouts
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // false para STARTTLS (puerto 587)
     auth: {
         user: GMAIL_USER,
         pass: GMAIL_PASS,
     },
-    debug: true,    // Muestra la conversación SMTP
-    logger: true,   // Imprime los logs en consola
+    tls: {
+        // Esto ayuda en entornos donde el certificado o el proxy dan problemas
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
+    },
+    debug: true,
+    logger: true,
+    connectionTimeout: 20000, // Aumentamos a 20 segundos
+    greetingTimeout: 20000,
 });
 
 // Verificar conexión al iniciar
