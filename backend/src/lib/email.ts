@@ -4,12 +4,25 @@ import dotenv from 'dotenv';
 // Asegurarse de cargar el .env
 dotenv.config();
 
-// Configuración del transportador de Gmail
+const GMAIL_USER = 'fncmicndev@gmail.com';
+const GMAIL_PASS = process.env.GMAIL_APP_PASSWORD;
+
+console.log('--- Email Setup Debug ---');
+console.log('Working Directory:', process.cwd());
+console.log('GMAIL_APP_PASSWORD exists:', !!GMAIL_PASS);
+if (GMAIL_PASS) {
+    console.log('GMAIL_APP_PASSWORD length:', GMAIL_PASS.length);
+}
+console.log('------------------------');
+
+// Configuración del transportador de Gmail (más explícita)
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // true para puerto 465
     auth: {
-        user: 'fncmicndev@gmail.com',
-        pass: process.env.GMAIL_APP_PASSWORD, // Importante: usar Contraseña de Aplicación
+        user: GMAIL_USER,
+        pass: GMAIL_PASS,
     },
 });
 
