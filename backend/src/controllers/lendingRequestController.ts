@@ -61,7 +61,16 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
 
         res.status(201).json(lendingRequest);
 
-        // Envío de correo asíncrono (no bloquea la respuesta)
+        // Create notification for the book owner
+        await prisma.notification.create({
+            data: {
+                userId: book.ownerId,
+                message: `${requester.name || 'Alguien'} ha solicitado tu libro "${book.title}"`,
+                type: 'REQUEST',
+            },
+        });
+
+        // Envío de correo asíncrono
         if (book.owner.email) {
             sendBookRequestEmail(
                 book.owner.email,
@@ -183,6 +192,15 @@ export const approveRequest = async (req: AuthRequest, res: Response) => {
 
         res.json(updatedRequest);
 
+        // Create notification for the requester
+        await prisma.notification.create({
+            data: {
+                userId: lendingRequest.requesterId,
+                message: `Tu solicitud para el libro "${lendingRequest.book.title}" ha sido aprobada`,
+                type: 'APPROVAL',
+            },
+        });
+
         // Envío de correo asíncrono
         if (lendingRequest.requester.email) {
             sendRequestApprovedEmail(
@@ -243,6 +261,15 @@ export const rejectRequest = async (req: AuthRequest, res: Response) => {
         const owner = await prisma.user.findUnique({ where: { id: req.user.id } });
 
         res.json(updatedRequest);
+
+        // Create notification for the requester
+        await prisma.notification.create({
+            data: {
+                userId: lendingRequest.requesterId,
+                message: `Tu solicitud para el libro "${lendingRequest.book.title}" ha sido rechazada`,
+                type: 'REJECTION',
+            },
+        });
 
         // Envío de correo asíncrono
         if (lendingRequest.requester.email) {
@@ -421,6 +448,15 @@ export const cancelRequest = async (req: AuthRequest, res: Response) => {
                     },
                 },
                 requester: { select: { name: true, image: true } },
+            },
+        });
+
+        // Create notification for the book owner
+        await prisma.notification.create({
+            data: {
+                userId: updatedRequest.book.ownerId,
+                message: `${updatedRequest.requester.name || 'Alguien'} ha cancelado su solicitud por "${updatedRequest.book.title}"`,
+                type: 'CANCELLATION',
             },
         });
 

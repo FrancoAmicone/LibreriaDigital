@@ -66,3 +66,11 @@ export const lendingApi = {
     cancel: (requestId: string, token: string) =>
         apiFetch(`/api/lending-requests/${requestId}`, { method: 'DELETE', token }),
 };
+
+export const notificationsApi = {
+    getAll: (token: string) => apiFetch('/api/notifications', { token }),
+    markAsRead: (id: string, token: string) =>
+        apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH', token }),
+    markAllAsRead: (token: string) =>
+        apiFetch('/api/notifications/read-all', { method: 'PATCH', token }),
+};

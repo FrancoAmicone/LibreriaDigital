@@ -15,6 +15,7 @@ model User {
   heldBooks       Book[]           @relation("HolderRelation")
   ownedBooks      Book[]           @relation("OwnerRelation")
   lendingRequests LendingRequest[]
+  notifications   Notification[]
 }
 
 model Book {
@@ -65,4 +66,16 @@ enum LendingStatus {
   REJECTED
   RETURNED
   CANCELLED
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  type      String   // e.g., "REQUEST", "APPROVAL", "CANCELLATION"
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([userId])
 }

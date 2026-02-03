@@ -8,6 +8,7 @@ import BookCard from '@/components/BookCard';
 import { Plus, Settings, LogOut, Clock } from 'lucide-react';
 import AddBookModal from '@/components/AddBookModal';
 import BookDetailsModal from '@/components/BookDetailsModal';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function HomePage() {
   const router = useRouter();
@@ -123,6 +124,7 @@ export default function HomePage() {
               <Settings className="w-5 h-5" />
             </button>
           )}
+          <NotificationBell token={token} />
           <button onClick={() => router.push('/profile')} className="transition-transform hover:scale-105 active:scale-95 relative">
             <img src={user?.image} className="w-8 h-8 rounded-full border-2 border-primary" alt="Profile" />
             {hasPendingRequests && (

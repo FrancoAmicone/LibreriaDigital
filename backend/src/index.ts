@@ -12,11 +12,13 @@ app.use(express.json());
 import userRoutes from './routes/userRoutes.js';
 import bookRoutes from './routes/bookRoutes.js';
 import lendingRequestRoutes from './routes/lendingRequestRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 // Usar Rutas
 app.use('/api/users', userRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/lending-requests', lendingRequestRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/health', async (req: Request, res: Response) => {
     try {
