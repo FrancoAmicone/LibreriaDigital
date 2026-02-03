@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import type { AuthRequest } from '../middleware/auth.js';
-import { sendBookRequestEmail, sendRequestApprovedEmail } from '../lib/email.js';
+import { sendBookRequestEmail, sendRequestApprovedEmail, sendRequestRejectedEmail } from '../lib/email.js';
 
 // Create a lending request
 export const createRequest = async (req: AuthRequest, res: Response) => {
@@ -208,7 +208,10 @@ export const rejectRequest = async (req: AuthRequest, res: Response) => {
     try {
         const lendingRequest = await prisma.lendingRequest.findUnique({
             where: { id },
-            include: { book: true },
+            include: {
+                book: { include: { owner: true } },
+                requester: true
+            },
         });
 
         if (!lendingRequest) {
@@ -237,7 +240,19 @@ export const rejectRequest = async (req: AuthRequest, res: Response) => {
             },
         });
 
+        const owner = await prisma.user.findUnique({ where: { id: req.user.id } });
+
         res.json(updatedRequest);
+
+        // Envío de correo asíncrono
+        if (lendingRequest.requester.email) {
+            sendRequestRejectedEmail(
+                lendingRequest.requester.email,
+                lendingRequest.requester.name || 'Usuario',
+                owner?.name || 'El dueño del libro',
+                lendingRequest.book.title
+            ).catch(err => console.error('Email delay error:', err));
+        }
     } catch (error) {
         res.status(500).json({ error: 'Error rejecting request', details: error });
     }
