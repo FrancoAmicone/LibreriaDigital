@@ -12,18 +12,30 @@ console.log('Working Directory:', process.cwd());
 console.log('GMAIL_APP_PASSWORD exists:', !!GMAIL_PASS);
 if (GMAIL_PASS) {
     console.log('GMAIL_APP_PASSWORD length:', GMAIL_PASS.length);
+    if (GMAIL_PASS.length !== 16) {
+        console.warn('⚠️ WARNING: Google App Passwords must be 16 characters (no spaces). Your current length is', GMAIL_PASS.length);
+    }
 }
 console.log('------------------------');
 
-// Configuración del transportador de Gmail (más explícita)
+// Configuración de Nodemailer con Logs detallados
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // true para puerto 465
+    service: 'gmail',
     auth: {
         user: GMAIL_USER,
         pass: GMAIL_PASS,
     },
+    debug: true,    // Muestra la conversación SMTP
+    logger: true,   // Imprime los logs en consola
+});
+
+// Verificar conexión al iniciar
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('❌ Error crítico de conexión SMTP:', error);
+    } else {
+        console.log('✅ Servidor de correo listo para enviar mensajes');
+    }
 });
 
 export const sendBookRequestEmail = async (
