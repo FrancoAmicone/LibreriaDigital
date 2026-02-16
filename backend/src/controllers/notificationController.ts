@@ -13,9 +13,13 @@ export const getNotifications = async (req: Request, res: Response) => {
 
         console.log(`[Notification] Found ${notifications.length} notifications for user: ${userId}`);
         res.json(notifications);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching notifications:', error);
-        res.status(500).json({ error: 'Failed to fetch notifications' });
+        res.status(500).json({
+            error: 'Failed to fetch notifications',
+            details: error.message,
+            code: error.code
+        });
     }
 };
 
