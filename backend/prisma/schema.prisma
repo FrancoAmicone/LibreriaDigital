@@ -78,4 +78,5 @@ model Notification {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([userId])
+  @@map("notifications")
 }
