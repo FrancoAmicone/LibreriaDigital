@@ -4,12 +4,14 @@ import { prisma } from '../lib/prisma.js';
 export const getNotifications = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
+        console.log(`[Notification] Fetching notifications for user: ${userId}`);
 
         const notifications = await prisma.notification.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
         });
 
+        console.log(`[Notification] Found ${notifications.length} notifications for user: ${userId}`);
         res.json(notifications);
     } catch (error) {
         console.error('Error fetching notifications:', error);

@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import type { AuthRequest } from '../middleware/auth.js';
+import { createSafeNotification } from '../services/notificationService.js';
 
 // Create a lending request
 export const createRequest = async (req: AuthRequest, res: Response) => {
@@ -54,12 +55,10 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         });
 
         // Create notification for the book owner
-        await prisma.notification.create({
-            data: {
-                userId: book.ownerId,
-                message: `${lendingRequest.requester.name || 'Alguien'} ha solicitado tu libro: ${book.title}`,
-                type: 'REQUEST',
-            },
+        createSafeNotification({
+            userId: book.ownerId,
+            message: `${lendingRequest.requester.name || 'Alguien'} ha solicitado tu libro: ${book.title}`,
+            type: 'REQUEST',
         });
 
         res.status(201).json(lendingRequest);
@@ -170,12 +169,10 @@ export const approveRequest = async (req: AuthRequest, res: Response) => {
         });
 
         // Create notification for the requester
-        await prisma.notification.create({
-            data: {
-                userId: updatedRequest.requesterId,
-                message: `Tu solicitud para "${updatedRequest.book.title}" ha sido APROBADA`,
-                type: 'APPROVAL',
-            },
+        createSafeNotification({
+            userId: updatedRequest.requesterId,
+            message: `Tu solicitud para "${updatedRequest.book.title}" ha sido APROBADA`,
+            type: 'APPROVAL',
         });
 
         res.json(updatedRequest);
@@ -225,12 +222,10 @@ export const rejectRequest = async (req: AuthRequest, res: Response) => {
         });
 
         // Create notification for the requester
-        await prisma.notification.create({
-            data: {
-                userId: updatedRequest.requesterId,
-                message: `Tu solicitud para "${updatedRequest.book.title}" ha sido rechazada`,
-                type: 'REJECTION',
-            },
+        createSafeNotification({
+            userId: updatedRequest.requesterId,
+            message: `Tu solicitud para "${updatedRequest.book.title}" ha sido rechazada`,
+            type: 'REJECTION',
         });
 
         res.json(updatedRequest);
@@ -305,12 +300,10 @@ export const markAsDelivered = async (req: AuthRequest, res: Response) => {
         ]);
 
         // Create notification for the requester
-        await prisma.notification.create({
-            data: {
-                userId: updatedRequest.requesterId,
-                message: `El libro "${updatedRequest.book.title}" ya figura como entregado. ¡Que disfrutes la lectura!`,
-                type: 'DELIVERY',
-            },
+        createSafeNotification({
+            userId: updatedRequest.requesterId,
+            message: `El libro "${updatedRequest.book.title}" ya figura como entregado. ¡Que disfrutes la lectura!`,
+            type: 'DELIVERY',
         });
 
         res.json(updatedRequest);
@@ -370,12 +363,10 @@ export const markAsReturned = async (req: AuthRequest, res: Response) => {
         ]);
 
         // Create notification for the requester
-        await prisma.notification.create({
-            data: {
-                userId: updatedRequest.requesterId,
-                message: `Has devuelto el libro "${updatedRequest.book.title}". ¡Gracias por cuidarlo!`,
-                type: 'RETURN',
-            },
+        createSafeNotification({
+            userId: updatedRequest.requesterId,
+            message: `Has devuelto el libro "${updatedRequest.book.title}". ¡Gracias por cuidarlo!`,
+            type: 'RETURN',
         });
 
         res.json(updatedRequest);
@@ -424,12 +415,10 @@ export const cancelRequest = async (req: AuthRequest, res: Response) => {
         });
 
         // Create notification for the book owner
-        await prisma.notification.create({
-            data: {
-                userId: updatedRequest.book.ownerId,
-                message: `La solicitud para tu libro "${updatedRequest.book.title}" ha sido cancelada`,
-                type: 'CANCELLATION',
-            },
+        createSafeNotification({
+            userId: updatedRequest.book.ownerId,
+            message: `La solicitud para tu libro "${updatedRequest.book.title}" ha sido cancelada`,
+            type: 'CANCELLATION',
         });
 
         res.json(updatedRequest);
